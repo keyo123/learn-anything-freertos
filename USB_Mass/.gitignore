@@ -1,0 +1,28 @@
+# 构建输出
+EIDE/build/
+
+# CMSIS pack 缓存
+EIDE/.cmsis/
+
+# Claude Code 配置
+.claude/
+
+# VS Code
+.vscode/
+
+# Keil / MDK 临时文件
+*.bak
+*.dep
+*.uvguix.*
+
+# 编译器临时文件
+*.o
+*.d
+*.crf
+*.hex
+*.bin
+*.sct
+
+# 系统文件
+Thumbs.db
+.DS_Store

@@ -33,4 +33,11 @@ Thumbs.db
 *.bin
 *.map
 *.lst
-USB_Mass
+# USB_Mass 项目配置目录（非代码）
+USB_Mass/.claude/
+USB_Mass/.agents/
+USB_Mass/.codex/
+USB_Mass/.git/
+USB_Mass/.mcp.json
+USB_Mass/CLAUDE.md
+USB_Mass/AGENTS.md
