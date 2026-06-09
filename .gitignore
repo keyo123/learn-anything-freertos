@@ -1,0 +1,36 @@
+# 编译输出
+Output/
+Listing/
+**/Output/
+**/Listing/
+
+# IDE 项目文件
+*.uvguix.*
+*.uvoptx
+*.uvprojx
+*.uvgui.*
+*.scvd
+DebugConfig/
+*.dep
+**/DebugConfig/
+**/.settings/
+**/.project
+**/.cproject
+
+# EIDE 生成文件
+**/EIDE/.cmsis/
+**/EIDE/.pack/
+
+# 操作系统无关
+.DS_Store
+Thumbs.db
+
+# 编译中间文件
+*.o
+*.d
+*.axf
+*.hex
+*.bin
+*.map
+*.lst
+USB_Mass

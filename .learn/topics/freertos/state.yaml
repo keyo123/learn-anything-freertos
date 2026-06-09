@@ -1,0 +1,172 @@
+topic: FreeRTOS
+created: 2026-06-02
+language: zh-CN
+total_concepts: 37
+concepts:
+  # 1. RTOS 基础概念
+  "什么是RTOS":
+    status: in_progress
+    confidence: 0.4
+    practice_count: 1
+    last_practice: 2026-06-02
+  "FreeRTOS概述":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "任务(Task)概念":
+    status: in_progress
+    confidence: 0.5
+    practice_count: 0
+    last_practice: 2026-06-02
+  "调度机制":
+    status: in_progress
+    confidence: 0.5
+    practice_count: 0
+    last_practice: 2026-06-02
+  "任务优先级":
+    status: in_progress
+    confidence: 0.5
+    practice_count: 1
+    last_practice: 2026-06-02
+  # 2. 任务管理
+  "任务创建与删除":
+    status: in_progress
+    confidence: 0.4
+    practice_count: 0
+    last_practice: 2026-06-02
+  "任务控制API":
+    status: in_progress
+    confidence: 0.55
+    practice_count: 2
+    last_practice: 2026-06-02
+  "任务通知":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "空闲任务与Tickless":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "任务堆栈管理":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  # 3. 队列与IPC
+  "队列Queue":
+    status: in_progress
+    confidence: 0.45
+    practice_count: 1
+    last_practice: 2026-06-02
+  "队列集":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "流缓冲区":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "消息缓冲区":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "事件组":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  # 4. 同步机制
+  "二值信号量":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "计数信号量":
+    status: in_progress
+    confidence: 0.5
+    practice_count: 1
+    last_practice: 2026-06-02
+  "互斥量Mutex":
+    status: in_progress
+    confidence: 0.25
+    practice_count: 0
+  "递归互斥量":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  # 5. 软件定时器
+  "定时器概念":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "定时器API":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  # 6. 中断管理
+  "中断安全API":
+    status: in_progress
+    confidence: 0.4
+    practice_count: 1
+    last_practice: 2026-06-02
+  "延迟中断处理":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "嵌套中断配置":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "临界区":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  # 7. 内存管理
+  "heap方案对比":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "动态vs静态分配":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "内存碎片避免":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  # 8. 低功耗
+  "Tickless模式":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "MCU功耗优化":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  # 9. 调试
+  "运行时统计":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "栈溢出检测":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "Trace功能":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "性能分析":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  # 10. 项目实践
+  "移植FreeRTOS":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "多任务应用架构":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
+  "常见问题与调试":
+    status: unexplored
+    confidence: 0.0
+    practice_count: 0
