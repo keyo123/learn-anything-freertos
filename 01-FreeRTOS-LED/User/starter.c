@@ -11,6 +11,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
+#include "event_groups.h"
 
 #include "bsp_led.h"
 #include "bsp_key.h"
@@ -151,6 +152,271 @@ void vExampleISR(void)
     // xSemaphoreGiveFromISR(xMutex, NULL);
 }
 
+/* ========== 练习 4：递归互斥量 ========== */
+
+static SemaphoreHandle_t xRecMutex = NULL;
+
+/*
+ * 模拟一个"日志写入"场景：
+ *
+ * log_write()        — 底层写入（需要锁）
+ * log_write_line()   — 格式化 + 换行（也需要锁，内部调用 log_write）
+ *
+ * 如果 xRecMutex 是普通 Mutex，log_write_line() 第二次 Take 会死锁！
+ * 递归互斥量允许同一任务重复 Take，只增加内部计数。
+ */
+
+static void log_write(const char *str)
+{
+    /* 模拟写入硬件（如 UART） */
+    printf("%s", str);
+}
+
+static void log_write_line(const char *tag, int value)
+{
+    /* 这个函数自己也拿锁，然后调 log_write */
+    xSemaphoreTakeRecursive(xRecMutex, portMAX_DELAY);
+
+    char buf[32];
+    sprintf(buf, "[%s] %d\r\n", tag, value);
+    log_write(buf);  /* log_write 不需要再拿锁，它假定调用者已持有 */
+
+    xSemaphoreGiveRecursive(xRecMutex);
+}
+
+/* 递归遍历打印任务链 — 模拟分层日志 */
+static void print_task_chain(const char **names, int depth)
+{
+    xSemaphoreTakeRecursive(xRecMutex, portMAX_DELAY);
+
+    if (depth > 0) {
+        /* 调用同样需要锁的格式化打印 */
+        log_write_line(names[depth - 1], depth);  /* ← 递归获取！普通 Mutex 会死锁 */
+        print_task_chain(names, depth - 1);        /* 递归调用 */
+    }
+
+    xSemaphoreGiveRecursive(xRecMutex);
+}
+
+static void vTaskRecursiveDemo(void *pvParameters)
+{
+    (void)pvParameters;
+
+    vTaskDelay(pdMS_TO_TICKS(200));  /* 等练习 2 跑完 */
+
+    printf("\r\n=== Exercise 4: Recursive Mutex ===\r\n");
+
+    const char *names[] = {"Idle", "LED", "UART", "LCD"};
+    int count = sizeof(names) / sizeof(names[0]);
+
+    print_task_chain(names, count);
+
+    /* 演示递归计数：Take N 次，必须 Give N 次 */
+    printf("\r\n--- Recursive count test ---\r\n");
+
+    xSemaphoreTakeRecursive(xRecMutex, portMAX_DELAY);
+    printf("  Take 1 (count=1)\r\n");
+
+    xSemaphoreTakeRecursive(xRecMutex, portMAX_DELAY);
+    printf("  Take 2 (count=2)\r\n");
+
+    xSemaphoreTakeRecursive(xRecMutex, portMAX_DELAY);
+    printf("  Take 3 (count=3)\r\n");
+
+    /* 少于 3 次 Give → Mutex 不会真正释放 */
+    xSemaphoreGiveRecursive(xRecMutex);
+    printf("  Give 1 (count=2)\r\n");
+    xSemaphoreGiveRecursive(xRecMutex);
+    printf("  Give 2 (count=1)\r\n");
+    xSemaphoreGiveRecursive(xRecMutex);
+    printf("  Give 3 (count=0, released)\r\n");
+
+    printf("=== Recursive Demo Done ===\r\n");
+
+    vTaskDelete(NULL);
+}
+
+/* ========== 练习 5：临界区 vs Mutex ========== */
+
+/*
+ * 一个协调任务串行执行三轮测试（每轮创建两个工作任务）+ 嵌套演示。
+ * 这样 printf 不会交错，结果清晰可读。
+ */
+
+#define TEST_LOOPS 5000
+
+static volatile uint32_t g_ulCounter = 0;
+static volatile int g_nCompleted = 0;
+static SemaphoreHandle_t xCounterMutex = NULL;
+
+/* 三个工作任务的模式：无保护 / Mutex / 临界区 */
+
+static void vWorkerNoProt(void *pvParams)
+{
+    int i;
+    (void)pvParams;
+    for (i = 0; i < TEST_LOOPS; i++) {
+        g_ulCounter++;
+        taskYIELD();  /* 主动让出 CPU，给另一个任务机会打断 */
+    }
+    g_nCompleted++;
+    vTaskDelete(NULL);
+}
+
+static void vWorkerMutex(void *pvParams)
+{
+    int i;
+    (void)pvParams;
+    for (i = 0; i < TEST_LOOPS; i++) {
+        xSemaphoreTake(xCounterMutex, portMAX_DELAY);
+        g_ulCounter++;
+        taskYIELD();  /* 安全！Mutex 还持有着，别的任务进不来 */
+        xSemaphoreGive(xCounterMutex);
+    }
+    g_nCompleted++;
+    vTaskDelete(NULL);
+}
+
+static void vWorkerCritical(void *pvParams)
+{
+    int i;
+    (void)pvParams;
+    for (i = 0; i < TEST_LOOPS; i++) {
+        taskENTER_CRITICAL();
+        g_ulCounter++;
+        taskEXIT_CRITICAL();
+    }
+    g_nCompleted++;
+    vTaskDelete(NULL);
+}
+
+/* 协调任务：依次执行三轮 + 嵌套演示 */
+static void vTestAll(void *pvParams)
+{
+    (void)pvParams;
+
+    vTaskDelay(pdMS_TO_TICKS(300));  /* 等练习 2、4 跑完 */
+
+    printf("\r\n=== Exercise 5: Critical Section vs Mutex ===\r\n");
+
+    /* ---- Phase 1: 无保护 ---- */
+    g_ulCounter = 0;
+    g_nCompleted = 0;
+    xTaskCreate(vWorkerNoProt, "WNoP1", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+    xTaskCreate(vWorkerNoProt, "WNoP2", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+    while (g_nCompleted < 2) vTaskDelay(1);  /* 等两个工人都完成 */
+    printf("[NoProt]    %lu (expected %d)\r\n", g_ulCounter, TEST_LOOPS * 2);
+
+    /* ---- Phase 2: Mutex 保护 ---- */
+    g_ulCounter = 0;
+    g_nCompleted = 0;
+    xTaskCreate(vWorkerMutex, "WMtx1", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+    xTaskCreate(vWorkerMutex, "WMtx2", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+    while (g_nCompleted < 2) vTaskDelay(1);
+    printf("[Mutex]     %lu (expected %d)\r\n", g_ulCounter, TEST_LOOPS * 2);
+
+    /* ---- Phase 3: 临界区保护 ---- */
+    g_ulCounter = 0;
+    g_nCompleted = 0;
+    xTaskCreate(vWorkerCritical, "WCri1", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+    xTaskCreate(vWorkerCritical, "WCri2", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+    while (g_nCompleted < 2) vTaskDelay(1);
+    printf("[Critical]  %lu (expected %d)\r\n", g_ulCounter, TEST_LOOPS * 2);
+
+    /* ---- 临界区嵌套演示 ---- */
+    printf("\r\n--- Nesting test ---\r\n");
+    taskENTER_CRITICAL();
+    printf("  Outer enter\r\n");
+    taskENTER_CRITICAL();
+    printf("  Inner enter (count=2)\r\n");
+    taskEXIT_CRITICAL();
+    printf("  Inner exit (count=1)\r\n");
+    taskEXIT_CRITICAL();
+    printf("  Outer exit (count=0)\r\n");
+
+    /* 临界区内不能阻塞（可取消注释放大镜看看）*/
+    // taskENTER_CRITICAL();
+    // vTaskDelay(pdMS_TO_TICKS(10));  /* ← 死锁！关中断后无 SysTick 切换 */
+    // taskEXIT_CRITICAL();
+
+    printf("=== Critical Section Demo Done ===\r\n");
+
+    vTaskDelete(NULL);
+}
+
+/* ========== 练习 6：事件组 ========== */
+
+/*
+ * 温控采集系统模拟：
+ *
+ * BIT_0 — 传感器数据就绪（Sensor 每 200ms 采集一次）
+ * BIT_1 — 用户确认采集（User 每 300ms 确认一次）
+ *
+ * Processor 等待 BIT_0 AND BIT_1 → 处理数据 → 自动清位
+ *
+ * 预期：两个位都置位时 Processor 才被唤醒。
+ *       Sensor(200ms) vs User(300ms) 周期不同，所以不是每次采集都触发处理。
+ */
+
+#define BIT_SENSOR  (1 << 0)
+#define BIT_CONFIRM (1 << 1)
+
+static EventGroupHandle_t xEventGroup = NULL;
+
+static void vTaskSensor(void *pvParams)
+{
+    (void)pvParams;
+    int i;
+
+    for (i = 1; i <= 5; i++)
+    {
+        vTaskDelay(pdMS_TO_TICKS(200));
+        printf("[Sensor]  采集 #%d\r\n", i);
+        xEventGroupSetBits(xEventGroup, BIT_SENSOR);
+    }
+
+    vTaskDelete(NULL);
+}
+
+static void vTaskUser(void *pvParams)
+{
+    (void)pvParams;
+    int i;
+
+    for (i = 1; i <= 5; i++)
+    {
+        vTaskDelay(pdMS_TO_TICKS(300));
+        printf("[User]    确认 #%d\r\n", i);
+        xEventGroupSetBits(xEventGroup, BIT_CONFIRM);
+    }
+
+    vTaskDelete(NULL);
+}
+
+static void vTaskProcessor(void *pvParams)
+{
+    (void)pvParams;
+    int count = 0;
+
+    while (count < 5)
+    {
+        /* AND 模式：BIT_SENSOR 和 BIT_CONFIRM 都置位才唤醒，之后自动清位 */
+        EventBits_t bits = xEventGroupWaitBits(
+            xEventGroup,
+            BIT_SENSOR | BIT_CONFIRM,  /* 等待的位 */
+            pdTRUE,                    /* 满足后自动清除 */
+            pdTRUE,                    /* pdTRUE=AND, pdFALSE=OR */
+            portMAX_DELAY
+        );
+
+        count++;
+        printf(">>> Processor: 处理 #%d (bits=0x%02x)\r\n", count, bits);
+    }
+
+    printf("\r\n=== Event Group Demo Done ===\r\n");
+    vTaskDelete(NULL);
+}
+
 /* ========== main ========== */
 
 int main(void)
@@ -178,15 +444,35 @@ int main(void)
         //             NULL, tskIDLE_PRIORITY + 1, NULL);
     }
 
-    /* === 练习 2：创建优先级继承演示 === */
-    xMutexPri = xSemaphoreCreateMutex();
+    /* === (屏蔽) 练习 2：优先级继承 === */
+    // xMutexPri = xSemaphoreCreateMutex();
+    // if (xMutexPri != NULL) {
+    //     xTaskCreate(vTaskLowPriority,  "Low",  configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+    //     xTaskCreate(vTaskMediumPriority, "Med", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
+    //     xTaskCreate(vTaskHighPriority, "High", configMINIMAL_STACK_SIZE, NULL, 3, NULL);
+    // }
 
-    if (xMutexPri != NULL)
+    /* === (屏蔽) 练习 4：递归互斥量 === */
+    // xRecMutex = xSemaphoreCreateRecursiveMutex();
+    // if (xRecMutex != NULL) {
+    //     xTaskCreate(vTaskRecursiveDemo, "RecDemo", configMINIMAL_STACK_SIZE * 2, NULL, 1, NULL);
+    // }
+
+    /* === (屏蔽) 练习 5：临界区 vs Mutex === */
+    // xCounterMutex = xSemaphoreCreateMutex();
+    // if (xCounterMutex != NULL) {
+    //     xTaskCreate(vTestAll, "TestAll", configMINIMAL_STACK_SIZE * 2, NULL, 1, NULL);
+    // }
+
+    /* === 练习 6：事件组 === */
+    xEventGroup = xEventGroupCreate();
+
+    if (xEventGroup != NULL)
     {
-        /* TODO: 创建三个任务，优先级依次增高 */
-        xTaskCreate(vTaskLowPriority,  "Low",  configMINIMAL_STACK_SIZE, NULL, 1, NULL);
-        xTaskCreate(vTaskMediumPriority, "Med", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
-        xTaskCreate(vTaskHighPriority, "High", configMINIMAL_STACK_SIZE, NULL, 3, NULL);
+        /* Processor 优先级 2 > Sensor/User 优先级 1，满足条件时立即处理 */
+        xTaskCreate(vTaskSensor,    "Sensor",    configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+        xTaskCreate(vTaskUser,      "User",      configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+        xTaskCreate(vTaskProcessor, "Processor", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
     }
 
     /* 启动调度器 */

@@ -70,9 +70,10 @@ concepts:
     confidence: 0.0
     practice_count: 0
   "事件组":
-    status: unexplored
-    confidence: 0.0
-    practice_count: 0
+    status: in_progress
+    confidence: 0.55
+    practice_count: 1
+    last_practice: 2026-06-10
   # 4. 同步机制
   "二值信号量":
     status: unexplored
@@ -85,8 +86,9 @@ concepts:
     last_practice: 2026-06-02
   "互斥量Mutex":
     status: in_progress
-    confidence: 0.25
-    practice_count: 0
+    confidence: 0.6
+    practice_count: 1
+    last_practice: 2026-06-10
   "递归互斥量":
     status: unexplored
     confidence: 0.0
@@ -115,9 +117,10 @@ concepts:
     confidence: 0.0
     practice_count: 0
   "临界区":
-    status: unexplored
-    confidence: 0.0
-    practice_count: 0
+    status: in_progress
+    confidence: 0.55
+    practice_count: 1
+    last_practice: 2026-06-10
   # 7. 内存管理
   "heap方案对比":
     status: unexplored
