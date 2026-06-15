@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\24212\\\\Desktop\\\\za\\\\study\\\\learn-anything\\\\01-FreeRTOS-LED\" -Recurse -Name)",
+      "Bash(Select-Object -First 40)"
     ]
   }
 }

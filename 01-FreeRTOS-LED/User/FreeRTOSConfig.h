@@ -161,16 +161,16 @@ extern uint32_t SystemCoreClock;
 // ��������֪ͨ���ܣ�Ĭ�Ͽ���
 #define configUSE_TASK_NOTIFICATIONS 1
 
-// ʹ�û����ź���
+// ʹûź
 #define configUSE_MUTEXES 1
 
-// ʹ�õݹ黥���ź���
+// ʹõݹ黥ź
 #define configUSE_RECURSIVE_MUTEXES 1
 
-// Ϊ1ʱʹ�ü����ź���
-#define configUSE_COUNTING_SEMAPHORES 0
+// Ϊ1ʱʹüź
+#define configUSE_COUNTING_SEMAPHORES 1
 
-/* ���ÿ���ע����ź�������Ϣ���и��� */
+/* ÿעźϢи */
 #define configQUEUE_REGISTRY_SIZE 10
 
 #define configUSE_APPLICATION_TASK_TAG 0

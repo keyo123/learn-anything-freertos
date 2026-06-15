@@ -28,6 +28,7 @@
 
 #include "FreeRTOS.h" //FreeRTOSʹ��
 #include "task.h"
+#include "semphr.h"   /* xSemaphoreGiveFromISR */
 #include "bsp_exti.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
@@ -40,6 +41,11 @@
 /* Private variables ---------------------------------------------------------*/
 /* LED1任务句柄，在main.c中定义 */
 extern TaskHandle_t LED1_Task_Handle;
+
+/* 二值信号量句柄，在 demo_semphr.c 中定义 — ISR → 任务同步 */
+extern SemaphoreHandle_t xBinarySem_Key1;
+extern SemaphoreHandle_t xBinarySem_Key2;
+extern TaskHandle_t xBtnNotifyTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -165,34 +171,65 @@ void SysTick_Handler(void)
 /* FreeRTOS LED任务 — 按键中断处理 */
 
 /**
-  * @brief  KEY2按键中断(PC0)，恢复LED1_Task
+  * @brief  KEY2按键中断(PC0)，二值信号量同步 or 恢复LED1_Task
   * @param  None
   * @retval None
+  *
+  * demo_semphr.c 运行时：xBinarySem_Key2 非 NULL → GiveFromISR 通知任务（Pipeline）
+  * main.c        运行时：xBinarySem_Key2 == NULL → xTaskResumeFromISR（旧行为）
   */
 void EXTI0_IRQHandler(void)
 {
     if (EXTI_GetITStatus(KEY2_INT_EXTI_LINE) == SET)
     {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-        xHigherPriorityTaskWoken = xTaskResumeFromISR(LED1_Task_Handle);
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 
+        if (xBinarySem_Key2 != NULL)
+        {
+            /* 练习 7：二值信号量 ISR 同步模式 */
+            xSemaphoreGiveFromISR(xBinarySem_Key2, &xHigherPriorityTaskWoken);
+        }
+        else
+        {
+            /* 旧模式：恢复 LED1_Task（兼容 main.c） */
+            xHigherPriorityTaskWoken = xTaskResumeFromISR(LED1_Task_Handle);
+        }
+
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
         EXTI_ClearITPendingBit(KEY2_INT_EXTI_LINE);
     }
 }
 
 /**
-  * @brief  KEY1按键中断(PB11)，挂起LED1_Task
+  * @brief  KEY1按键中断(PB11)，二值信号量同步 or 挂起LED1_Task
   * @param  None
   * @retval None
+  *
+  * demo_semphr.c 运行时：xBinarySem_Key1 非 NULL → GiveFromISR 通知任务
+  * main.c        运行时：xBinarySem_Key1 == NULL → vTaskSuspend（旧行为）
   */
 void EXTI15_10_IRQHandler(void)
 {
     if (EXTI_GetITStatus(KEY1_INT_EXTI_LINE) == SET)
     {
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-        vTaskSuspend(LED1_Task_Handle);
+        if(xBtnNotifyTaskHandle != NULL)
+        {
+            vTaskNotifyGiveFromISR(xBtnNotifyTaskHandle,&xHigherPriorityTaskWoken);
+        }
+        else if (xBinarySem_Key1 != NULL)
+        {
+            /* 练习 7：二值信号量 ISR 同步模式 */
+            xSemaphoreGiveFromISR(xBinarySem_Key1, &xHigherPriorityTaskWoken);
+        }
+        else
+        {
+            /* 旧模式：直接挂起 LED1_Task（兼容 main.c） */
+            vTaskSuspend(LED1_Task_Handle);
+        }
 
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
         EXTI_ClearITPendingBit(KEY1_INT_EXTI_LINE);
     }
 }

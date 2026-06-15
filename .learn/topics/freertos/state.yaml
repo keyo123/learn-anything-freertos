@@ -40,9 +40,10 @@ concepts:
     practice_count: 2
     last_practice: 2026-06-02
   "任务通知":
-    status: unexplored
-    confidence: 0.0
+    status: in_progress
+    confidence: 0.3
     practice_count: 0
+    last_practice: 2026-06-15
   "空闲任务与Tickless":
     status: unexplored
     confidence: 0.0
@@ -76,23 +77,25 @@ concepts:
     last_practice: 2026-06-10
   # 4. 同步机制
   "二值信号量":
-    status: unexplored
-    confidence: 0.0
-    practice_count: 0
-  "计数信号量":
     status: in_progress
-    confidence: 0.5
+    confidence: 0.65
     practice_count: 1
-    last_practice: 2026-06-02
+    last_practice: 2026-06-11
+  "计数信号量":
+    status: mastered
+    confidence: 0.75
+    practice_count: 2
+    last_practice: 2026-06-15
   "互斥量Mutex":
     status: in_progress
     confidence: 0.6
     practice_count: 1
     last_practice: 2026-06-10
   "递归互斥量":
-    status: unexplored
-    confidence: 0.0
+    status: in_progress
+    confidence: 0.3
     practice_count: 0
+    last_practice: 2026-06-15
   # 5. 软件定时器
   "定时器概念":
     status: unexplored

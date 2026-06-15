@@ -31,8 +31,8 @@ static void NVIC_Configuration(void)
   
   /* �����ж�Դ������1 */
   NVIC_InitStructure.NVIC_IRQChannel = KEY1_INT_EXTI_IRQ;
-  /* ������ռ���ȼ� */
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+  /* ���÷���FreeRTOS FromISR API���ж����ȼ� >= 5 */
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 5;
   /* ���������ȼ� */
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
   /* ʹ���ж�ͨ�� */

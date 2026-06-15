@@ -57,7 +57,10 @@ virtualFolder:
         - path: ../User/usart/bsp_usart.c
         - path: ../User/Key/bsp_key.c
         - path: ../User/bsp_exti/bsp_exti.c
-        - path: ../User/starter.c
+        - path: ../User/demos.h
+        - path: ../User/demo_mutex.c
+        - path: ../User/demo_event.c
+        - path: ../User/demo_semphr.c
       folders: []
     - name: FreeRTOS
       files: []
