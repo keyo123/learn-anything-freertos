@@ -27,9 +27,9 @@
 #include "stm32f10x_it.h"
 
 #include "FreeRTOS.h" //FreeRTOSʹ��
-#include "task.h"
-#include "semphr.h"   /* xSemaphoreGiveFromISR */
 #include "bsp_exti.h"
+#include "semphr.h" /* xSemaphoreGiveFromISR */
+#include "task.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
  * @{
@@ -46,6 +46,7 @@ extern TaskHandle_t LED1_Task_Handle;
 extern SemaphoreHandle_t xBinarySem_Key1;
 extern SemaphoreHandle_t xBinarySem_Key2;
 extern TaskHandle_t xBtnNotifyTaskHandle;
+extern SemaphoreHandle_t xISRTestSem;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -59,20 +60,16 @@ extern TaskHandle_t xBtnNotifyTaskHandle;
  * @param  None
  * @retval None
  */
-void NMI_Handler(void)
-{
-}
+void NMI_Handler(void) {}
 
 /**
  * @brief  This function handles Hard Fault exception.
  * @param  None
  * @retval None
  */
-void HardFault_Handler(void)
-{
+void HardFault_Handler(void) {
   /* Go to infinite loop when Hard Fault exception occurs */
-  while (1)
-  {
+  while (1) {
   }
 }
 
@@ -81,11 +78,9 @@ void HardFault_Handler(void)
  * @param  None
  * @retval None
  */
-void MemManage_Handler(void)
-{
+void MemManage_Handler(void) {
   /* Go to infinite loop when Memory Manage exception occurs */
-  while (1)
-  {
+  while (1) {
   }
 }
 
@@ -94,11 +89,9 @@ void MemManage_Handler(void)
  * @param  None
  * @retval None
  */
-void BusFault_Handler(void)
-{
+void BusFault_Handler(void) {
   /* Go to infinite loop when Bus Fault exception occurs */
-  while (1)
-  {
+  while (1) {
   }
 }
 
@@ -107,11 +100,9 @@ void BusFault_Handler(void)
  * @param  None
  * @retval None
  */
-void UsageFault_Handler(void)
-{
+void UsageFault_Handler(void) {
   /* Go to infinite loop when Usage Fault exception occurs */
-  while (1)
-  {
+  while (1) {
   }
 }
 
@@ -129,9 +120,7 @@ void UsageFault_Handler(void)
  * @param  None
  * @retval None
  */
-void DebugMon_Handler(void)
-{
-}
+void DebugMon_Handler(void) {}
 
 /**
  * @brief  This function handles PendSVC exception.
@@ -149,11 +138,9 @@ void DebugMon_Handler(void)
 //  */
 extern void xPortSysTickHandler(void);
 // systick�жϷ�����
-void SysTick_Handler(void)
-{
+void SysTick_Handler(void) {
 #if (INCLUDE_xTaskGetSchedulerState == 1)
-  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
-  {
+  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
 #endif /* INCLUDE_xTaskGetSchedulerState */
     xPortSysTickHandler();
 #if (INCLUDE_xTaskGetSchedulerState == 1)
@@ -171,67 +158,58 @@ void SysTick_Handler(void)
 /* FreeRTOS LED任务 — 按键中断处理 */
 
 /**
-  * @brief  KEY2按键中断(PC0)，二值信号量同步 or 恢复LED1_Task
-  * @param  None
-  * @retval None
-  *
-  * demo_semphr.c 运行时：xBinarySem_Key2 非 NULL → GiveFromISR 通知任务（Pipeline）
-  * main.c        运行时：xBinarySem_Key2 == NULL → xTaskResumeFromISR（旧行为）
-  */
-void EXTI0_IRQHandler(void)
-{
-    if (EXTI_GetITStatus(KEY2_INT_EXTI_LINE) == SET)
-    {
-        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+ * @brief  KEY2按键中断(PC0)，二值信号量同步 or 恢复LED1_Task
+ * @param  None
+ * @retval None
+ *
+ * demo_semphr.c 运行时：xBinarySem_Key2 非 NULL → GiveFromISR
+ * 通知任务（Pipeline） main.c        运行时：xBinarySem_Key2 == NULL →
+ * xTaskResumeFromISR（旧行为）
+ */
+void EXTI0_IRQHandler(void) {
+  if (EXTI_GetITStatus(KEY2_INT_EXTI_LINE) == SET) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-        if (xBinarySem_Key2 != NULL)
-        {
-            /* 练习 7：二值信号量 ISR 同步模式 */
-            xSemaphoreGiveFromISR(xBinarySem_Key2, &xHigherPriorityTaskWoken);
-        }
-        else
-        {
-            /* 旧模式：恢复 LED1_Task（兼容 main.c） */
-            xHigherPriorityTaskWoken = xTaskResumeFromISR(LED1_Task_Handle);
-        }
-
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-        EXTI_ClearITPendingBit(KEY2_INT_EXTI_LINE);
+    if (xBinarySem_Key2 != NULL) {
+      /* 练习 7：二值信号量 ISR 同步模式 */
+      xSemaphoreGiveFromISR(xBinarySem_Key2, &xHigherPriorityTaskWoken);
+    } else if (LED1_Task_Handle != NULL) {
+      /* 旧模式：恢复 LED1_Task（兼容 main.c） */
+      xHigherPriorityTaskWoken = xTaskResumeFromISR(LED1_Task_Handle);
     }
+
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    EXTI_ClearITPendingBit(KEY2_INT_EXTI_LINE);
+  }
 }
 
 /**
-  * @brief  KEY1按键中断(PB11)，二值信号量同步 or 挂起LED1_Task
-  * @param  None
-  * @retval None
-  *
-  * demo_semphr.c 运行时：xBinarySem_Key1 非 NULL → GiveFromISR 通知任务
-  * main.c        运行时：xBinarySem_Key1 == NULL → vTaskSuspend（旧行为）
-  */
-void EXTI15_10_IRQHandler(void)
-{
-    if (EXTI_GetITStatus(KEY1_INT_EXTI_LINE) == SET)
-    {
-        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+ * @brief  KEY1按键中断(PB11)，二值信号量同步 or 挂起LED1_Task
+ * @param  None
+ * @retval None
+ *
+ * demo_semphr.c 运行时：xBinarySem_Key1 非 NULL → GiveFromISR 通知任务
+ * main.c        运行时：xBinarySem_Key1 == NULL → vTaskSuspend（旧行为）
+ */
+void EXTI15_10_IRQHandler(void) {
+  if (EXTI_GetITStatus(KEY1_INT_EXTI_LINE) == SET) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-        if(xBtnNotifyTaskHandle != NULL)
-        {
-            vTaskNotifyGiveFromISR(xBtnNotifyTaskHandle,&xHigherPriorityTaskWoken);
-        }
-        else if (xBinarySem_Key1 != NULL)
-        {
-            /* 练习 7：二值信号量 ISR 同步模式 */
-            xSemaphoreGiveFromISR(xBinarySem_Key1, &xHigherPriorityTaskWoken);
-        }
-        else
-        {
-            /* 旧模式：直接挂起 LED1_Task（兼容 main.c） */
-            vTaskSuspend(LED1_Task_Handle);
-        }
-
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-        EXTI_ClearITPendingBit(KEY1_INT_EXTI_LINE);
+    if (xISRTestSem != NULL) {
+      xSemaphoreGiveFromISR(xISRTestSem, &xHigherPriorityTaskWoken);
+    } else if (xBtnNotifyTaskHandle != NULL) {
+      vTaskNotifyGiveFromISR(xBtnNotifyTaskHandle, &xHigherPriorityTaskWoken);
+    } else if (xBinarySem_Key1 != NULL) {
+      /* 练习 7：二值信号量 ISR 同步模式 */
+      xSemaphoreGiveFromISR(xBinarySem_Key1, &xHigherPriorityTaskWoken);
+    } else {
+      /* 旧模式：直接挂起 LED1_Task（兼容 main.c） */
+      vTaskSuspend(LED1_Task_Handle);
     }
+
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    EXTI_ClearITPendingBit(KEY1_INT_EXTI_LINE);
+  }
 }
 
 /******************************************************************************/

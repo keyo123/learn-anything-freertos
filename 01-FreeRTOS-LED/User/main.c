@@ -12,10 +12,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 /* 开发板硬件bsp头文件 */
-#include "bsp_led.h"
-#include "bsp_key.h"
-#include "bsp_usart.h"
 #include "bsp_exti.h"
+#include "bsp_key.h"
+#include "bsp_led.h"
+#include "bsp_usart.h"
 /* 演示项目头文件 */
 #include "demos.h"
 
@@ -30,69 +30,70 @@ static TaskHandle_t AppTaskCreate_Handle = NULL;
 static void AppTaskCreate(void); /* 用于创建应用演示任务 */
 static void BSP_Init(void);      /* 用于初始化板载相关资源 */
 
-int main(void)
-{
-    BaseType_t xReturn = pdPASS;
+int main(void) {
+  BaseType_t xReturn = pdPASS;
 
-    /* 开发板硬件初始化 */
-    BSP_Init();
+  /* 开发板硬件初始化 */
+  BSP_Init();
 
-    /* 创建全局的 printf 安全锁 */
-    xPrintfMutex = xSemaphoreCreateMutex();
+  /* 创建全局的 printf 安全锁 */
+  xPrintfMutex = xSemaphoreCreateMutex();
 
-    /* 创建AppTaskCreate任务以初始化演示程序 */
-    xReturn = xTaskCreate((TaskFunction_t)AppTaskCreate,
-                          (const char *)"AppTaskCreate",
-                          (uint16_t)512,
-                          (void *)NULL,
-                          (UBaseType_t)1,
-                          (TaskHandle_t *)&AppTaskCreate_Handle);
+  /* 创建AppTaskCreate任务以初始化演示程序 */
+  xReturn =
+      xTaskCreate((TaskFunction_t)AppTaskCreate, (const char *)"AppTaskCreate",
+                  (uint16_t)512, (void *)NULL, (UBaseType_t)1,
+                  (TaskHandle_t *)&AppTaskCreate_Handle);
 
-    if (pdPASS == xReturn)
-    {
-        /* 启动任务，开启调度 */
-        vTaskStartScheduler();
-    }
-    else
-    {
-        return -1;
-    }
+  if (pdPASS == xReturn) {
+    /* 启动任务，开启调度 */
+    vTaskStartScheduler();
+  } else {
+    return -1;
+  }
 
-    while (1)
-        ; /* 正常不会执行到这里 */
+  while (1)
+    ; /* 正常不会执行到这里 */
 }
 
-static void AppTaskCreate(void)
-{
-    taskENTER_CRITICAL(); // 进入临界区
+static void AppTaskCreate(void) {
+  taskENTER_CRITICAL(); // 进入临界区
 
-    printfSafe("System Init Success!\r\n");
+  printfSafe("System Init Success!\r\n");
 
-    /* ==================== 启动演示模块 ==================== */
-    
-    /* 1. 启动信号量及优先级继承对比演示 */
-    start_semphr_demos();
+  /* ==================== 启动演示模块 ==================== */
 
-    /* 2. 启动互斥量、优先级继承与递归锁演示 */
-    start_mutex_demos();
+  // /* 1. 启动信号量及优先级继承对比演示 */
+  // start_semphr_demos();
 
-    /* 3. 启动事件组温控演示 */
-    start_event_demos();
+  // /* 2. 启动互斥量、优先级继承与递归锁演示 */
+  // start_mutex_demos();
 
-    /* ===================================================== */
+  // /* 3. 启动事件组温控演示 */
+  // start_event_demos();
 
-    vTaskDelete(AppTaskCreate_Handle); // 删除AppTaskCreate初始化任务
+  // /* 4. 启动任务创建与删除演示 */
+  // start_task_demo();
 
-    taskEXIT_CRITICAL(); // 退出临界区
+  // /* 5. 启动中断安全 API 演示 */
+  // start_isr_demo();
+
+  /* 6. 启动递归互斥量演示 */
+  start_rec_mutex_demo();
+
+  /* ===================================================== */
+
+  vTaskDelete(AppTaskCreate_Handle); // 删除AppTaskCreate初始化任务
+
+  taskEXIT_CRITICAL(); // 退出临界区
 }
 
-static void BSP_Init(void)
-{
-    /* STM32中断优先级分组为4 */
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+static void BSP_Init(void) {
+  /* STM32中断优先级分组为4 */
+  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 
-    /* LED、串口及按键外部中断初始化 */
-    LED_GPIO_Config();
-    USART_Config();
-    EXTI_Key_Config();
+  /* LED、串口及按键外部中断初始化 */
+  LED_GPIO_Config();
+  USART_Config();
+  EXTI_Key_Config();
 }

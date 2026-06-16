@@ -61,6 +61,9 @@ virtualFolder:
         - path: ../User/demo_mutex.c
         - path: ../User/demo_event.c
         - path: ../User/demo_semphr.c
+        - path: ../User/demo_task.c
+        - path: ../User/demo_isr.c
+        - path: ../User/demo_rec_mutex.c
       folders: []
     - name: FreeRTOS
       files: []

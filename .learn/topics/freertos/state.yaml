@@ -6,9 +6,9 @@ concepts:
   # 1. RTOS 基础概念
   "什么是RTOS":
     status: in_progress
-    confidence: 0.4
-    practice_count: 1
-    last_practice: 2026-06-02
+    confidence: 0.45
+    practice_count: 2
+    last_practice: 2026-06-16
   "FreeRTOS概述":
     status: unexplored
     confidence: 0.0
@@ -30,10 +30,10 @@ concepts:
     last_practice: 2026-06-02
   # 2. 任务管理
   "任务创建与删除":
-    status: in_progress
-    confidence: 0.4
-    practice_count: 0
-    last_practice: 2026-06-02
+    status: mastered
+    confidence: 0.8
+    practice_count: 1
+    last_practice: 2026-06-16
   "任务控制API":
     status: in_progress
     confidence: 0.55
@@ -41,9 +41,9 @@ concepts:
     last_practice: 2026-06-02
   "任务通知":
     status: in_progress
-    confidence: 0.3
-    practice_count: 0
-    last_practice: 2026-06-15
+    confidence: 0.45
+    practice_count: 1
+    last_practice: 2026-06-16
   "空闲任务与Tickless":
     status: unexplored
     confidence: 0.0
@@ -78,9 +78,9 @@ concepts:
   # 4. 同步机制
   "二值信号量":
     status: in_progress
-    confidence: 0.65
-    practice_count: 1
-    last_practice: 2026-06-11
+    confidence: 0.7
+    practice_count: 2
+    last_practice: 2026-06-16
   "计数信号量":
     status: mastered
     confidence: 0.75
@@ -92,10 +92,10 @@ concepts:
     practice_count: 1
     last_practice: 2026-06-10
   "递归互斥量":
-    status: in_progress
-    confidence: 0.3
-    practice_count: 0
-    last_practice: 2026-06-15
+    status: mastered
+    confidence: 0.8
+    practice_count: 1
+    last_practice: 2026-06-16
   # 5. 软件定时器
   "定时器概念":
     status: unexplored
@@ -107,10 +107,10 @@ concepts:
     practice_count: 0
   # 6. 中断管理
   "中断安全API":
-    status: in_progress
-    confidence: 0.4
-    practice_count: 1
-    last_practice: 2026-06-02
+    status: mastered
+    confidence: 0.8
+    practice_count: 2
+    last_practice: 2026-06-16
   "延迟中断处理":
     status: unexplored
     confidence: 0.0

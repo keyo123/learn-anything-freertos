@@ -30,4 +30,13 @@ void start_event_demos(void);
 /* 二值与计数信号量演示 (包含：中断同步、流水线事件传递、信号量优先级继承对比) */
 void start_semphr_demos(void);
 
+/* 动态任务创建与删除演示 */
+void start_task_demo(void);
+
+/* 中断安全 API 演示 */
+void start_isr_demo(void);
+
+/* 递归互斥量演示 */
+void start_rec_mutex_demo(void);
+
 #endif /* __DEMOS_H */
