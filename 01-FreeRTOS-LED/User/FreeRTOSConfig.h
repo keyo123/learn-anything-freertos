@@ -210,7 +210,7 @@ extern uint32_t SystemCoreClock;
                 FreeRTOS软件定时器有关配置
 **********************************************************************/
 // 启用软件定时器
-#define configUSE_TIMERS 0
+#define configUSE_TIMERS 1
 // 软件定时器任务的优先级
 #define configTIMER_TASK_PRIORITY (configMAX_PRIORITIES - 1)
 // 软件定时器命令队列长度

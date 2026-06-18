@@ -39,4 +39,13 @@ void start_isr_demo(void);
 /* 递归互斥量演示 */
 void start_rec_mutex_demo(void);
 
+/* 队列演示 */
+void start_queue_demo(void);
+
+/* 高级任务通知演示 */
+void start_notify_adv_demo(void);
+
+/* 软件定时器演示 */
+void start_timer_demo(void);
+
 #endif /* __DEMOS_H */

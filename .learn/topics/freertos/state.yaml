@@ -40,10 +40,10 @@ concepts:
     practice_count: 2
     last_practice: 2026-06-02
   "任务通知":
-    status: in_progress
-    confidence: 0.45
-    practice_count: 1
-    last_practice: 2026-06-16
+    status: mastered
+    confidence: 0.8
+    practice_count: 2
+    last_practice: 2026-06-17
   "空闲任务与Tickless":
     status: unexplored
     confidence: 0.0
@@ -54,10 +54,10 @@ concepts:
     practice_count: 0
   # 3. 队列与IPC
   "队列Queue":
-    status: in_progress
-    confidence: 0.45
-    practice_count: 1
-    last_practice: 2026-06-02
+    status: mastered
+    confidence: 0.8
+    practice_count: 2
+    last_practice: 2026-06-17
   "队列集":
     status: unexplored
     confidence: 0.0
@@ -71,26 +71,26 @@ concepts:
     confidence: 0.0
     practice_count: 0
   "事件组":
-    status: in_progress
-    confidence: 0.55
-    practice_count: 1
-    last_practice: 2026-06-10
+    status: mastered
+    confidence: 0.85
+    practice_count: 2
+    last_practice: 2026-06-18
   # 4. 同步机制
   "二值信号量":
-    status: in_progress
-    confidence: 0.7
-    practice_count: 2
-    last_practice: 2026-06-16
+    status: mastered
+    confidence: 0.85
+    practice_count: 3
+    last_practice: 2026-06-18
   "计数信号量":
     status: mastered
     confidence: 0.75
     practice_count: 2
     last_practice: 2026-06-15
   "互斥量Mutex":
-    status: in_progress
-    confidence: 0.6
-    practice_count: 1
-    last_practice: 2026-06-10
+    status: mastered
+    confidence: 0.85
+    practice_count: 2
+    last_practice: 2026-06-18
   "递归互斥量":
     status: mastered
     confidence: 0.8

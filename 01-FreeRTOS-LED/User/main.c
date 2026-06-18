@@ -78,8 +78,17 @@ static void AppTaskCreate(void) {
   // /* 5. 启动中断安全 API 演示 */
   // start_isr_demo();
 
-  /* 6. 启动递归互斥量演示 */
-  start_rec_mutex_demo();
+  // /* 6. 启动递归互斥量演示 */
+  // start_rec_mutex_demo();
+
+  // /* 7. 启动队列数据通信演示 */
+  // start_queue_demo();
+
+  // /* 8. 启动高级任务通知演示 */
+  // start_notify_adv_demo();
+
+  /* 9. 启动软件定时器演示 */
+  start_timer_demo();
 
   /* ===================================================== */
 

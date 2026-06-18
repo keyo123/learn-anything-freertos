@@ -64,6 +64,9 @@ virtualFolder:
         - path: ../User/demo_task.c
         - path: ../User/demo_isr.c
         - path: ../User/demo_rec_mutex.c
+        - path: ../User/demo_queue.c
+        - path: ../User/demo_notify_adv.c
+        - path: ../User/demo_timer.c
       folders: []
     - name: FreeRTOS
       files: []
