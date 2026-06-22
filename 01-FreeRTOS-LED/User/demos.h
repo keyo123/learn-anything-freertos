@@ -48,4 +48,13 @@ void start_notify_adv_demo(void);
 /* 软件定时器演示 */
 void start_timer_demo(void);
 
+/* 相对延时与绝对延时对比演示 */
+void start_delay_demo(void);
+
+/* 栈溢出测试演示 */
+void start_overflow_demo(void);
+
+/* 内存分配失败测试演示 */
+void start_malloc_demo(void);
+
 #endif /* __DEMOS_H */

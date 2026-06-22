@@ -88,3 +88,188 @@ void start_task_demo(void) {
               (uint16_t)256, (void *)NULL, (UBaseType_t)2,
               (TaskHandle_t *)&xSupervisorTaskHandle);
 }
+
+/* ========================================================================
+ * 5. 相对延时 vTaskDelay vs 绝对延时 vTaskDelayUntil 对比演示
+ * ======================================================================== */
+
+static void vTaskRelativeDelay(void *pvParameters)
+{
+    (void)pvParameters;
+    TickType_t xStart = xTaskGetTickCount();
+    /* 模拟波动的任务耗时 (工作时间) */
+    const TickType_t xWorkTimes[5] = {
+        pdMS_TO_TICKS(100),
+        pdMS_TO_TICKS(300),
+        pdMS_TO_TICKS(200),
+        pdMS_TO_TICKS(400),
+        pdMS_TO_TICKS(100)
+    };
+    int i;
+
+    printfSafe("[Relative] Task started. Target: 1000ms sleep, fluctuating work.\r\n");
+
+    for (i = 0; i < 5; i++)
+    {
+        TickType_t xWakeTime = xTaskGetTickCount() - xStart;
+        printfSafe("[Relative] Loop %d Wakeup: %u ms (Work was %u ms)\r\n", 
+                   i + 1, 
+                   (unsigned int)(xWakeTime * portTICK_PERIOD_MS),
+                   (unsigned int)(xWorkTimes[i] * portTICK_PERIOD_MS));
+
+        /* 模拟波动的任务数据处理耗时 */
+        vTaskDelay(xWorkTimes[i]);
+
+        /* 相对延时 1000ms */
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+
+    printfSafe("[Relative] Task finished!\r\n");
+    vTaskDelete(NULL);
+}
+
+static void vTaskAbsoluteDelay(void *pvParameters)
+{
+    (void)pvParameters;
+    TickType_t xStart = xTaskGetTickCount();
+    TickType_t xLastWakeTime = xStart;
+    const TickType_t xPeriod = pdMS_TO_TICKS(1500); /* 设为 1500ms 周期，确保大于最大的 work time + scheduling margin */
+    /* 模拟相同的波动任务耗时 */
+    const TickType_t xWorkTimes[5] = {
+        pdMS_TO_TICKS(100),
+        pdMS_TO_TICKS(300),
+        pdMS_TO_TICKS(200),
+        pdMS_TO_TICKS(400),
+        pdMS_TO_TICKS(100)
+    };
+    int i;
+
+    printfSafe("[Absolute] Task started. Target Period: 1500ms constant, fluctuating work.\r\n");
+
+    for (i = 0; i < 5; i++)
+    {
+        /* 绝对延时：保证严格以 1500ms 为周期唤醒 */
+        vTaskDelayUntil(&xLastWakeTime, xPeriod);
+
+        TickType_t xWakeTime = xLastWakeTime - xStart;
+        printfSafe("[Absolute] Loop %d Wakeup: %u ms (Work was %u ms)\r\n", 
+                   i + 1, 
+                   (unsigned int)(xWakeTime * portTICK_PERIOD_MS),
+                   (unsigned int)(xWorkTimes[i] * portTICK_PERIOD_MS));
+
+        /* 模拟波动的任务数据处理耗时 */
+        vTaskDelay(xWorkTimes[i]);
+    }
+
+    printfSafe("[Absolute] Task finished!\r\n");
+    vTaskDelete(NULL);
+}
+
+void start_delay_demo(void)
+{
+    printfSafe("\r\n=== Start Delay Comparison Demo ===\r\n");
+    
+    /* 创建相对延时任务，优先级为 1 */
+    xTaskCreate(vTaskRelativeDelay, "RelativeDelay", configMINIMAL_STACK_SIZE * 2, NULL, 1, NULL);
+
+    /* 创建绝对延时任务，优先级为 1 */
+    xTaskCreate(vTaskAbsoluteDelay, "AbsoluteDelay", configMINIMAL_STACK_SIZE * 2, NULL, 1, NULL);
+}
+
+/* ========================================================================
+ * 6. 栈溢出检测演示
+ * ======================================================================== */
+
+static void trigger_recursion(int depth)
+{
+    /* 每次递归分配 80 字节的局部数组 */
+    volatile char local_arr[80];
+    local_arr[0] = (char)depth;
+    local_arr[79] = (char)depth;
+    
+    /* 强制触发上下文切换，让调度器在递归过程中检查栈溢出 */
+    taskYIELD();
+    
+    if (depth > 0)
+    {
+        trigger_recursion(depth - 1);
+    }
+    
+    /* 打印以防止编译器优化掉整个递归 */
+    printfSafe("[Recursion] depth=%d, SP addr=0x%x\r\n", depth, (unsigned int)&local_arr[0]);
+}
+
+static void vTaskStackOverflowTrigger(void *pvParameters)
+{
+    (void)pvParameters;
+    
+    /* 等待 2 秒，让系统启动日志打印完整 */
+    vTaskDelay(pdMS_TO_TICKS(2000));
+    
+    printfSafe("\r\n[OverflowTask] Task started. Stack size: 128 words (512 bytes).\r\n");
+    printfSafe("[OverflowTask] Attempting to call deep recursion to overflow stack...\r\n");
+
+    /* 调用递归，每次分配 80 字节，递归 6 层将需要 480 字节以上，必溢出 */
+    trigger_recursion(6);
+
+    printfSafe("[OverflowTask] Finished (Should not reach here!)\r\n");
+    vTaskDelete(NULL);
+}
+
+void start_overflow_demo(void)
+{
+    printfSafe("\r\n=== Start Stack Overflow Test Demo ===\r\n");
+    
+    /* 创建一个栈大小只有 128 words 的任务，优先级为 1 */
+    xTaskCreate(vTaskStackOverflowTrigger, "OverflowTask", 128, NULL, 1, NULL);
+}
+
+/* ========================================================================
+ * 7. 内存分配失败检测演示 (Malloc Failed Hook)
+ * ======================================================================== */
+
+static void vTaskMallocFailTrigger(void *pvParameters)
+{
+    (void)pvParameters;
+    int count = 0;
+    void *ptr;
+
+    /* 等待 2 秒，让系统启动日志输出完毕 */
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    printfSafe("\r\n[MallocTask] Started. Let's exhaust the FreeRTOS heap...\r\n");
+
+    for (;;)
+    {
+        uint32_t freeHeap = xPortGetFreeHeapSize();
+        printfSafe("[MallocTask] Free Heap: %u bytes. Allocation #%d (attempting 500 bytes)...\r\n", 
+                   (unsigned int)freeHeap, ++count);
+
+        /* 每次动态申请 500 字节 */
+        ptr = pvPortMalloc(500);
+
+        if (ptr != NULL)
+        {
+            printfSafe("  -> Success! Block pointer: 0x%x\r\n", (unsigned int)ptr);
+        }
+        else
+        {
+            /* 理论上，如果钩子使能，内核在内部 pvPortMalloc 失败时就会调用钩子函数，
+               程序直接进入死循环，不会执行到这个 else 分支。 */
+            printfSafe("  -> Failed! (Should not reach here if hook is enabled!)\r\n");
+            vTaskDelete(NULL);
+            return;
+        }
+
+        /* 稍作延时，让串口打印完毕 */
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+void start_malloc_demo(void)
+{
+    printfSafe("\r\n=== Start Malloc Failed Hook Test Demo ===\r\n");
+    
+    /* 创建内存分配测试任务，优先级为 1 */
+    xTaskCreate(vTaskMallocFailTrigger, "MallocTask", configMINIMAL_STACK_SIZE * 2, NULL, 1, NULL);
+}

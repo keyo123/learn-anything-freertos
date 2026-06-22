@@ -179,10 +179,10 @@ extern uint32_t SystemCoreClock;
 #define configUSE_TICK_HOOK 0
 
 // 内存分配失败钩子函数使能
-#define configUSE_MALLOC_FAILED_HOOK 0
+#define configUSE_MALLOC_FAILED_HOOK 1
 
 // 栈溢出检测使能。0为关闭，1或2为开启
-#define configCHECK_FOR_STACK_OVERFLOW 0
+#define configCHECK_FOR_STACK_OVERFLOW 2
 
 /********************************************************************
           FreeRTOS运行时间和任务状态统计配置

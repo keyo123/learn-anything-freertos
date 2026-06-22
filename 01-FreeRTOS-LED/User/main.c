@@ -88,7 +88,16 @@ static void AppTaskCreate(void) {
   // start_notify_adv_demo();
 
   /* 9. 启动软件定时器演示 */
-  start_timer_demo();
+  // start_timer_demo();
+
+  /* 10. 启动相对延时 vs 绝对延时对比演示 */
+  // start_delay_demo();
+
+  /* 11. 启动栈溢出测试演示 */
+  // start_overflow_demo();
+
+  /* 12. 启动内存分配失败测试演示 */
+  start_malloc_demo();
 
   /* ===================================================== */
 
@@ -105,4 +114,29 @@ static void BSP_Init(void) {
   LED_GPIO_Config();
   USART_Config();
   EXTI_Key_Config();
+}
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
+  printf("\r\n==============================================\r\n");
+  printf("!!! CRITICAL ERROR: STACK OVERFLOW DETECTED !!!\r\n");
+  printf("Task: [%s] overflowed its stack!\r\n", pcTaskName);
+  printf("==============================================\r\n");
+  
+  /* 挂起所有中断，进入死循环 */
+  __disable_irq();
+  while (1) {
+    /* 可将 LED1 翻转以指示错误（裸机方式操作寄存器或调用库函数） */
+  }
+}
+
+void vApplicationMallocFailedHook(void) {
+  printf("\r\n==============================================\r\n");
+  printf("!!! CRITICAL ERROR: MALLOC ALLOCATION FAILED !!!\r\n");
+  printf("FreeRTOS Heap is completely exhausted!\r\n");
+  printf("==============================================\r\n");
+  
+  /* 挂起所有中断，进入死循环 */
+  __disable_irq();
+  while (1) {
+  }
 }
